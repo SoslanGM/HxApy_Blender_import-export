@@ -6,7 +6,7 @@ bl_info = {
     "blender":     (3, 0, 0),
     "location":    "File > Import-Export",
     "warning":     "",
-    "doc_url":     "",
+    "doc_url":     "https://github.com/SoslanGM/HxApy_Blender_import-export",
     "tracker_url": "",
     "support":     "TESTING",
     "category":    "Import-Export",
