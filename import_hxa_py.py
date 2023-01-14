@@ -1,17 +1,3 @@
-bl_info = {
-    "name":        "HxA import",
-    "description": "Support for import of HxA files",
-    "author":      "SoslanGM (Soslan Guchmazov)",
-    "version":     (0, 1),
-    "blender":     (3, 0, 0),
-    "location":    "File > Import-Export",
-    "warning":     "",
-    "doc_url":     "https://github.com/SoslanGM/HxApy_Blender_import-export",
-    "tracker_url": "",
-    "support":     "TESTING",
-    "category":    "Import-Export",
-}
-
 import bpy
 from bpy.props import (
     StringProperty
@@ -21,54 +7,9 @@ from bpy_extras.io_utils import (
 )
 
 
-import hxapy_read_write as hxa_rw
-import hxapy_util       as hxa_util
-import hxapy_validate   as hxa_valid
-
-
-def restore_mesh(verts, edges, faces, mesh_name="mesh", object_name="object"):
-    test_mesh = bpy.data.meshes.new(name=mesh_name)
-    test_mesh.from_pydata(verts, edges, faces)
-
-    test_object = bpy.data.objects.new(name=object_name, object_data=test_mesh)
-
-    bpy.context.view_layer.active_layer_collection.collection.objects.link(test_object)
-    bpy.ops.object.select_all(action='DESELECT')
-    test_object.select_set(True)
-    bpy.context.view_layer.objects.active = test_object
-
-
-def restore_armature(location, scale, heads, tails, names, parents):
-    bpy.ops.object.armature_add(enter_editmode=True)
-    ob_arm = bpy.context.object
-    arm    = ob_arm.data
-    ob_arm.location = location
-    ob_arm.scale    = scale
-
-    arm.edit_bones[-1].head = heads[0]
-    arm.edit_bones[-1].tail = tails[0]
-    arm.edit_bones[-1].name = names[0]
-
-    for i in range(1, len(heads)):
-        ebone = arm.edit_bones.new(names[i])
-        ebone.head = heads[i]
-        ebone.tail = tails[i]
-
-    for i in range(len(parents)):
-        bpy.ops.armature.select_all(action='DESELECT')
-        child_name  = names[i]
-        parent_name = parents[i]
-        if (parent_name == ""):
-            continue
-
-        child  = arm.edit_bones[child_name]
-        parent = arm.edit_bones[parent_name]
-        child.parent = parent
-
-    ob_arm.show_in_front = True
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.object.select_all(action='DESELECT')
-    ob_arm.select_set(True)
+from . import hxapy_read_write as hxa_rw
+from . import hxapy_util       as hxa_util
+from . import hxapy_validate   as hxa_valid
 
 
 class ImportHXA(bpy.types.Operator, ImportHelper):
@@ -84,6 +25,8 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
     )
 
     def execute(self, context):
+        from . import import_hxa_py
+
         silent = True
         hxa_dict = hxa_rw.HxaToDict(self.properties.filepath, silent)
 
@@ -189,7 +132,7 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
         me_name = meta_meshname["data"] if "meta_meshname" in locals() else "imported HxA mesh"
         ob_name = meta_objectname["data"] if "meta_objectname" in locals() else "imported HxA object"
 
-        restore_mesh(verts, edges, faces, me_name, ob_name)
+        import_hxa_py.restore_mesh(verts, edges, faces, me_name, ob_name)
         # - 1: apply scale and position post-load
         # now, select mesh and apply
         # mesh_object = bpy.data.objects[meta_objectname['data']]
@@ -247,7 +190,7 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
             for p in parents:
                 print(p)
 
-            restore_armature(armature_location, armature_scale, heads, tails, names, parents)
+            import_hxa_py.restore_armature(armature_location, armature_scale, heads, tails, names, parents)
 
             # parent armature, apply location and scale
             ob_arm = bpy.context.object
@@ -284,21 +227,46 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
         return {'FINISHED'}
 
 
-def menu_func_import(self, context):
-    self.layout.operator(ImportHXA.bl_idname, text="HxA (.hxa)")
+def restore_mesh(verts, edges, faces, mesh_name="mesh", object_name="object"):
+    test_mesh = bpy.data.meshes.new(name=mesh_name)
+    test_mesh.from_pydata(verts, edges, faces)
+
+    test_object = bpy.data.objects.new(name=object_name, object_data=test_mesh)
+
+    bpy.context.view_layer.active_layer_collection.collection.objects.link(test_object)
+    bpy.ops.object.select_all(action='DESELECT')
+    test_object.select_set(True)
+    bpy.context.view_layer.objects.active = test_object
 
 
-def register():
-    bpy.utils.register_class(ImportHXA)
+def restore_armature(location, scale, heads, tails, names, parents):
+    bpy.ops.object.armature_add(enter_editmode=True)
+    ob_arm = bpy.context.object
+    arm    = ob_arm.data
+    ob_arm.location = location
+    ob_arm.scale    = scale
 
-    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+    arm.edit_bones[-1].head = heads[0]
+    arm.edit_bones[-1].tail = tails[0]
+    arm.edit_bones[-1].name = names[0]
 
+    for i in range(1, len(heads)):
+        ebone = arm.edit_bones.new(names[i])
+        ebone.head = heads[i]
+        ebone.tail = tails[i]
 
-def unregister():
-    bpy.utils.unregister_class(ImportHXA)
+    for i in range(len(parents)):
+        bpy.ops.armature.select_all(action='DESELECT')
+        child_name  = names[i]
+        parent_name = parents[i]
+        if (parent_name == ""):
+            continue
 
-    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+        child  = arm.edit_bones[child_name]
+        parent = arm.edit_bones[parent_name]
+        child.parent = parent
 
-
-if __name__ == "__main__":
-    register()
+    ob_arm.show_in_front = True
+    bpy.ops.object.mode_set(mode='OBJECT')
+    bpy.ops.object.select_all(action='DESELECT')
+    ob_arm.select_set(True)

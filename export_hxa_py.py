@@ -1,25 +1,10 @@
-bl_info = {
-    "name":        "HxA export",
-    "description": "Support for export of HxA files",
-    "author":      "SoslanGM (Soslan Guchmazov)",
-    "version":     (0, 1),
-    "blender":     (3, 0, 0),
-    "location":    "File > Import-Export",
-    "warning":     "",
-    "doc_url":     "https://github.com/SoslanGM/HxApy_Blender_import-export",
-    "tracker_url": "",
-    "support":     "TESTING",
-    "category":    "Import-Export",
-}
-
 import bpy
 import bmesh
 
-
-import hxapy_header     as hxa
-import hxapy_read_write as hxa_rw
-import hxapy_util       as hxa_util
-import hxapy_validate   as hxa_valid
+from . import hxapy_header     as hxa
+from . import hxapy_util       as hxa_util
+from . import hxapy_read_write as hxa_rw
+from . import hxapy_validate   as hxa_valid
 
 from bpy.props import (
     StringProperty
@@ -28,6 +13,36 @@ from bpy_extras.io_utils import (
     ExportHelper
 )
 
+class ExportHXA(bpy.types.Operator, ExportHelper):
+    """Export a mesh as a HxA file"""
+    bl_idname  = "export_model.hxa"
+    bl_label   = "Export HxA"
+    bl_options = {'REGISTER'}
+
+    filename_ext = ".hxa"
+    filter_glob: StringProperty(
+        default = "*.hxa",
+        options = {'HIDDEN'}
+    )
+
+    def execute(self, context):
+        # filename = f"PyExport-{hxa_util.TS()}.hxa"
+
+        # hxa_dict = ExportPayload(context, self.filepath)
+        hxa_dict = ExportPayload()
+        if not hxa_valid.hxa_util_validate(hxa_dict):
+            self.report({'ERROR'}, f"{self.filepath} couldn't pass validation")
+            return {'CANCELLED'}
+
+        import json
+        import os
+        jsonname = f"testdump_giraffearmature_{hxa_util.TS()}.json"
+        with open(jsonname, "w", encoding='utf8') as f:
+            json.dump(hxa_dict, f, indent=4)
+        print(f"> test dump written: {os.getcwd()}{os.path.sep}{jsonname}")
+        hxa_rw.DictToHxa(self.filepath, hxa_dict, False)  # don't forget to pipe(?) silent through
+
+        return {'FINISHED'}
 
 def Meta_ArmatureData(arm_ob, arm):
     arm_location = [x for x in arm_ob.location]
@@ -491,55 +506,3 @@ def ExportPayload():
     }
     hxa_dict['nodes'] = [node]
     return hxa_dict
-
-
-class ExportHXA(bpy.types.Operator, ExportHelper):
-    """Export a mesh as a HxA file"""
-    bl_idname  = "export_model.hxa"
-    bl_label   = "Export HxA"
-    bl_options = {'REGISTER'}
-
-    filename_ext = ".hxa"
-    filter_glob: StringProperty(
-        default = "*.hxa",
-        options = {'HIDDEN'}
-    )
-
-    def execute(self, context):
-        # filename = f"PyExport-{hxa_util.TS()}.hxa"
-
-        # hxa_dict = ExportPayload(context, self.filepath)
-        hxa_dict = ExportPayload()
-        if not hxa_valid.hxa_util_validate(hxa_dict):
-            self.report({'ERROR'}, f"{self.filepath} couldn't pass validation")
-            return {'CANCELLED'}
-
-        import json
-        import os
-        jsonname = f"testdump_giraffearmature_{hxa_util.TS()}.json"
-        with open(jsonname, "w", encoding='utf8') as f:
-            json.dump(hxa_dict, f, indent=4)
-        print(f"> test dump written: {os.getcwd()}{os.path.sep}{jsonname}")
-        hxa_rw.DictToHxa(self.filepath, hxa_dict, False)  # don't forget to pipe(?) silent through
-
-        return {'FINISHED'}
-
-
-def menu_func_export(self, context):
-    self.layout.operator(ExportHXA.bl_idname, text='HxA (.hxa)')
-
-
-def register():
-    bpy.utils.register_class(ExportHXA)
-
-    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
-
-
-def unregister():
-    bpy.utils.unregister_class(ExportHXA)
-
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
-
-
-if __name__ == "__main__":
-    register()

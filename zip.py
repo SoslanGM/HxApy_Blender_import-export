@@ -7,6 +7,7 @@ def TS():
     return datetime.now().strftime("%d-%m-%y_%H-%M-%S")
 
 to_zip = [
+    "__init__.py",
     "import_hxa_py.py",
     "export_hxa_py.py",
     "hxapy_util.py",

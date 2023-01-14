@@ -1,6 +1,6 @@
 
-import hxapy_header     as hxa
-import hxapy_read_write as hxa_rw
+from . import hxapy_header     as hxa
+from . import hxapy_read_write as hxa_rw
 from sys import argv
 
 
