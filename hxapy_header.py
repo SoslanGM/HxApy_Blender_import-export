@@ -16,7 +16,7 @@ HXA_NAME_MAX_LENGTH = 255
 (HXA_NT_META_ONLY, HXA_NT_GEOMETRY, HXA_NT_IMAGE, HXA_NT_COUNT) = range(0, 4)
 
 
-def HXANodeType(node_type):
+def hxa_node_type(node_type):
     if (node_type >= HXA_NT_COUNT):
         print("! Incorrect node type!")
         exit()
@@ -29,7 +29,7 @@ def HXANodeType(node_type):
         return "HXA_NT_IMAGE"
 
 
-HXANodeTypeDict = {
+hxa_node_type_dict = {
     "HXA_NT_META_ONLY": HXA_NT_META_ONLY,
     "HXA_NT_GEOMETRY":  HXA_NT_GEOMETRY,
     "HXA_NT_IMAGE":     HXA_NT_IMAGE,
@@ -44,7 +44,7 @@ HXANodeTypeDict = {
 (HXA_MDT_INT64, HXA_MDT_DOUBLE, HXA_MDT_NODE, HXA_MDT_TEXT, HXA_MDT_BINARY, HXA_MDT_META, HXA_MDT_COUNT) = range(0, 7)
 
 
-def HXAMetaDataType(data_type):
+def hxa_meta_data_type(data_type):
     if (data_type == HXA_MDT_INT64):
         return "HXA_MDT_INT64"
     elif (data_type == HXA_MDT_DOUBLE):
@@ -59,7 +59,7 @@ def HXAMetaDataType(data_type):
         return "HXA_MDT_META"
 
 
-HXAMetaDataTypeDict = {
+hxa_meta_data_type_dict = {
     "HXA_MDT_INT64":  HXA_MDT_INT64,
     "HXA_MDT_DOUBLE": HXA_MDT_DOUBLE,
     "HXA_MDT_NODE":   HXA_MDT_NODE,
@@ -73,7 +73,7 @@ HXAMetaDataTypeDict = {
 (HXA_LDT_UINT8, HXA_LDT_INT32, HXA_LDT_FLOAT, HXA_LDT_DOUBLE, HXA_LDT_COUNT) = range(0, 5)
 
 
-def HXADataType(data_type: int) -> str:
+def hxa_data_type(data_type: int) -> str:
     if (data_type == HXA_LDT_UINT8):
         return "HXA_LDT_UINT8"
     elif (data_type == HXA_LDT_INT32):
@@ -84,7 +84,7 @@ def HXADataType(data_type: int) -> str:
         return "HXA_LDT_DOUBLE"
 
 
-HXADataTypeDict = {
+hxa_data_type_dict = {
     "HXA_LDT_UINT8":  HXA_LDT_UINT8,
     "HXA_LDT_INT32":  HXA_LDT_INT32,
     "HXA_LDT_FLOAT":  HXA_LDT_FLOAT,

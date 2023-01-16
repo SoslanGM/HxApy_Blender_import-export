@@ -25,10 +25,8 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
     )
 
     def execute(self, context):
-        from . import import_hxa_py
-
         silent = True
-        hxa_dict = hxa_rw.HxaToDict(self.properties.filepath, silent)
+        hxa_dict = hxa_rw.hxa_to_dict(self.properties.filepath, silent)
 
         if not hxa_valid.hxa_util_validate(hxa_dict):
             self.report({'ERROR'}, f"{self.filepath} couldn't pass validation")
@@ -109,12 +107,12 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
         ref_data     = hxa_dict["nodes"][0]["content"]["corner_stack"]["layers"][0]["data"]
 
         # - Add edge verts to the mesh, then write creases to mesh after picking out the edges?
-        verts = hxa_util.BreakUp(vert_data, vertex_count*3, 3)
+        verts = hxa_util.break_list_up(vert_data, vertex_count*3, 3)
 
         if ("meta_creases" in locals()):
             edge_data = meta_creases["data"][0]["data"]
             arrlen    = meta_creases["data"][0]["array_length"]
-            edges = hxa_util.BreakUp(edge_data, arrlen, 2)
+            edges = hxa_util.break_list_up(edge_data, arrlen, 2)
             crease_values = meta_creases["data"][1]["data"]
 
             crease_dict = {}
@@ -127,7 +125,7 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
         else:
             edges = []  # for now
 
-        faces = hxa_util.RestoreFaces(ref_data)
+        faces = hxa_util.restore_faces(ref_data)
 
         me_name = meta_meshname["data"] if "meta_meshname" in locals() else "imported HxA mesh"
         ob_name = meta_objectname["data"] if "meta_objectname" in locals() else "imported HxA object"
@@ -170,16 +168,16 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
             shapekeys_data = meta_shapekeys["data"]
 
             for i in range(len(shapekeys_data)):
-                shapekeys_values = hxa_util.BreakUp(shapekeys_data[i]['data'], vertex_count*3, 3)
+                shapekeys_values = hxa_util.break_list_up(shapekeys_data[i]['data'], vertex_count*3, 3)
                 shapekey = mesh_object.shape_key_add(name=shapekeys_data[i]['name'], from_mix=True)
                 for i in range(vertex_count):
                     shapekey.data[i].co = shapekeys_values[i]
 
         if ("meta_armaturedata" in locals()):
             bone_count = meta_bones_heads["array_length"] / 3
-            heads = hxa_util.BreakUp(meta_bones_heads["data"], int(bone_count)*3, 3)
+            heads = hxa_util.break_list_up(meta_bones_heads["data"], int(bone_count)*3, 3)
 
-            tails = hxa_util.BreakUp(meta_bones_tails["data"], int(bone_count)*3, 3)
+            tails = hxa_util.break_list_up(meta_bones_tails["data"], int(bone_count)*3, 3)
             names   = [x["data"] for x in meta_bones_names["data"]]
             parents = [x["data"] for x in meta_bones_parents["data"]]
 

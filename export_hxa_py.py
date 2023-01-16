@@ -13,6 +13,7 @@ from bpy_extras.io_utils import (
     ExportHelper
 )
 
+
 class ExportHXA(bpy.types.Operator, ExportHelper):
     """Export a mesh as a HxA file"""
     bl_idname  = "export_model.hxa"
@@ -26,25 +27,26 @@ class ExportHXA(bpy.types.Operator, ExportHelper):
     )
 
     def execute(self, context):
-        # filename = f"PyExport-{hxa_util.TS()}.hxa"
-
-        # hxa_dict = ExportPayload(context, self.filepath)
-        hxa_dict = ExportPayload()
+        hxa_dict = export_payload()
         if not hxa_valid.hxa_util_validate(hxa_dict):
             self.report({'ERROR'}, f"{self.filepath} couldn't pass validation")
             return {'CANCELLED'}
 
         import json
         import os
-        jsonname = f"testdump_giraffearmature_{hxa_util.TS()}.json"
+        jsonname = f"testdump_giraffearmature_{hxa_util.timestamp()}.json"
         with open(jsonname, "w", encoding='utf8') as f:
             json.dump(hxa_dict, f, indent=4)
         print(f"> test dump written: {os.getcwd()}{os.path.sep}{jsonname}")
-        hxa_rw.DictToHxa(self.filepath, hxa_dict, False)  # don't forget to pipe(?) silent through
+        hxa_rw.dict_to_hxa(self.filepath, hxa_dict, False)  # don't forget to pipe(?) silent through
 
         return {'FINISHED'}
 
-def Meta_ArmatureData(arm_ob, arm):
+
+def meta__armature_data(arm_ob, arm):
+    """
+    Packs all the armature(bones) data into HxA meta fields.
+    """
     arm_location = [x for x in arm_ob.location]
     arm_scale    = [x for x in arm_ob.scale]
     bone_count   = len(arm.bones)
@@ -62,8 +64,8 @@ def Meta_ArmatureData(arm_ob, arm):
     for t in tails:
         print(t)
 
-    heads   = hxa_util.FlattenList_1(heads)
-    tails   = hxa_util.FlattenList_1(tails)
+    heads   = hxa_util.flatten_list(heads)
+    tails   = hxa_util.flatten_list(tails)
     names   = [x.name for x in arm.bones]
     parents = [x.parent.name if x.parent else "" for x in arm.bones]
 
@@ -73,7 +75,7 @@ def Meta_ArmatureData(arm_ob, arm):
     meta_arm_location = {
         "name_length":  len(meta_arm_location_name),
         "name":         meta_arm_location_name,
-        "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_DOUBLE),
+        "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_DOUBLE),
         "array_length": len(arm_location),
         "data":         arm_location
     }
@@ -83,7 +85,7 @@ def Meta_ArmatureData(arm_ob, arm):
     meta_arm_scale = {
         "name_length":  len(meta_arm_scale_name),
         "name":         meta_arm_scale_name,
-        "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_DOUBLE),
+        "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_DOUBLE),
         "array_length": len(arm_scale),
         "data":         arm_scale
     }
@@ -93,7 +95,7 @@ def Meta_ArmatureData(arm_ob, arm):
     meta_bones_heads = {
         "name_length":  len(meta_bonesheads_name),
         "name":         meta_bonesheads_name,
-        "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_DOUBLE),
+        "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_DOUBLE),
         "array_length": bone_count * 3,
         "data":         heads
     }
@@ -103,7 +105,7 @@ def Meta_ArmatureData(arm_ob, arm):
     meta_bones_tails = {
         "name_length":  len(meta_bonestails_name),
         "name":         meta_bonestails_name,
-        "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_DOUBLE),
+        "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_DOUBLE),
         "array_length": bone_count * 3,
         "data":         tails
     }
@@ -115,7 +117,7 @@ def Meta_ArmatureData(arm_ob, arm):
         bone = {
             "name_length":  0,
             "name":         "",
-            "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_TEXT),
+            "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_TEXT),
             "array_length": len(names[i]),
             "data":         names[i]
         }
@@ -125,7 +127,7 @@ def Meta_ArmatureData(arm_ob, arm):
     meta_bones_names = {
         "name_length":  len(meta_bonesnames_name),
         "name":         meta_bonesnames_name,
-        "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_META),
+        "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_META),
         "array_length": bone_count,
         "data":         bone_names_entries
     }
@@ -136,7 +138,7 @@ def Meta_ArmatureData(arm_ob, arm):
         parent = {
             "name_length":  0,
             "name":         "",
-            "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_TEXT),
+            "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_TEXT),
             "array_length": len(parents[i]),
             "data":         parents[i]
         }
@@ -146,7 +148,7 @@ def Meta_ArmatureData(arm_ob, arm):
     meta_bones_parents = {
         "name_length":  len(meta_bonesparents_name),
         "name":         meta_bonesparents_name,
-        "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_META),
+        "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_META),
         "array_length": bone_count,
         "data":         bone_parents_entries
     }
@@ -156,7 +158,7 @@ def Meta_ArmatureData(arm_ob, arm):
     meta_armature_data = {
         "name_length":  len(meta_armature_data_name),
         "name":         meta_armature_data_name,
-        "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_META),
+        "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_META),
         "array_length": len(meta_armature_data_entries),
         "data":         meta_armature_data_entries
     }
@@ -164,7 +166,7 @@ def Meta_ArmatureData(arm_ob, arm):
     return meta_armature_data
 
 
-def ExtractWeights(ob):
+def extract_weights(ob):
     vgroups = ob.vertex_groups
     vcount  = len(ob.data.vertices)
 
@@ -186,7 +188,8 @@ def ExtractWeights(ob):
     return (indexes_biglist, weights_biglist)
 
 
-def HXAPyTypeMeta(typ):
+def hxapy_type_meta(typ):
+    """Which HxA meta type will we use to write this type into the export file?"""
     if (typ == int):
         return hxa.HXA_MDT_INT64
     elif (typ == float):
@@ -196,7 +199,11 @@ def HXAPyTypeMeta(typ):
 
 
 # def ExportPayload(context, filepath):
-def ExportPayload():
+def export_payload():
+    """
+    The overarching function to produce our dictionary representation of a HxA file,
+    before we write it to disk.
+    """
     bm      = bmesh.new()
     ob_mesh = bpy.context.object
     me      = ob_mesh.data
@@ -209,8 +216,8 @@ def ExportPayload():
     references = [[v.index for v in f.verts] for f in faces]
     references = [[-x-1 if _ref.index(x) == len(_ref)-1 else x for x in _ref] for _ref in references]
 
-    verts      = hxa_util.FlattenList_1(verts)
-    references = hxa_util.FlattenList_1(references)
+    verts      = hxa_util.flatten_list(verts)
+    references = hxa_util.flatten_list(references)
     print(verts)
     print(references)
 
@@ -230,7 +237,7 @@ def ExportPayload():
     meta_objectname = {
         "name_length":  len(meta_objectname_name),
         "name":         meta_objectname_name,
-        "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_TEXT),
+        "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_TEXT),
         "array_length": len(ob_mesh.name),
         "data":         ob_mesh.name
     }
@@ -240,7 +247,7 @@ def ExportPayload():
     meta_meshname = {
         "name_length":  len(meta_meshname_name),
         "name":         meta_meshname_name,
-        "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_TEXT),
+        "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_TEXT),
         "array_length": len(me.name),
         "data":         me.name
     }
@@ -250,7 +257,7 @@ def ExportPayload():
     meta_location = {
         "name_length":  len(meta_location_name),
         "name":         meta_location_name,
-        "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_DOUBLE),
+        "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_DOUBLE),
         "array_length": 3,
         "data":         [x for x in bpy.context.object.location]
     }
@@ -260,7 +267,7 @@ def ExportPayload():
     meta_scale = {
         "name_length":  len(meta_scale_name),
         "name":         meta_scale_name,
-        "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_DOUBLE),
+        "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_DOUBLE),
         "array_length": 3,
         "data":         [x for x in bpy.context.object.scale]
     }
@@ -270,7 +277,7 @@ def ExportPayload():
     meta_meshdata = {
         "name_length":  len(meta_meshdata_name),
         "name":         meta_meshdata_name,
-        "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_META),
+        "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_META),
         "array_length": len(meta_meshdata_entries),
         "data":         meta_meshdata_entries
     }
@@ -291,7 +298,7 @@ def ExportPayload():
             shapekey = {
                 "name_length":  len(name),
                 "name":         name,
-                "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_DOUBLE),
+                "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_DOUBLE),
                 "array_length": vert_count * 3,
                 "data":         shapekey_values
             }
@@ -301,7 +308,7 @@ def ExportPayload():
         meta_shapekeys = {
             "name_length":  len(meta_shapekeys_name),
             "name":         meta_shapekeys_name,
-            "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_META),
+            "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_META),
             "array_length": len(object_shapekeys),
             "data":         meta_shapekeys_data
         }
@@ -313,12 +320,12 @@ def ExportPayload():
             ob_arm = ob_mesh.parent
             arm    = ob_arm.data
 
-            meta_armaturedata = Meta_ArmatureData(ob_arm, arm)
+            meta_armaturedata = meta__armature_data(ob_arm, arm)
             meta_data.append(meta_armaturedata)
 
     # ** Vertex weights
     if (len(meta_data) > 0):
-        indexes_list, weights_list = ExtractWeights(ob_mesh)
+        indexes_list, weights_list = extract_weights(ob_mesh)
 
         vgroup_count = len(ob_mesh.vertex_groups)
         if (vgroup_count):
@@ -328,7 +335,7 @@ def ExportPayload():
                 ind_data = {
                     "name_length":  0,
                     "name":         "",
-                    "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_INT64),
+                    "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_INT64),
                     "array_length": len(indexes_list[i]),
                     "data":         indexes_list[i]
                 }
@@ -338,7 +345,7 @@ def ExportPayload():
             meta_weightindexes = {
                 "name_length":  len(meta_weightindexes_name),
                 "name":         meta_weightindexes_name,
-                "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_META),
+                "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_META),
                 "array_length": vgroup_count,
                 "data":         meta_weightindexes_data
             }
@@ -350,7 +357,7 @@ def ExportPayload():
                 vw_data = {
                     "name_length":  0,
                     "name":         "",
-                    "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_DOUBLE),
+                    "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_DOUBLE),
                     "array_length": len(weights_list[i]),
                     "data":         weights_list[i]
                 }
@@ -360,7 +367,7 @@ def ExportPayload():
             meta_vertexweights = {
                 "name_length":  len(meta_vertexweights_name),
                 "name":         meta_vertexweights_name,
-                "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_META),
+                "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_META),
                 "array_length": vgroup_count,
                 "data":         meta_vertexweights_data
             }
@@ -378,7 +385,7 @@ def ExportPayload():
     print(f"> {edges}")
     # sorted_edges = sorted(edges, key = lambda x: (x[0], x[1]))
     sorted_edges, sorted_creases = zip(*crease_tuples)
-    edge_verts = hxa_util.FlattenList_1(sorted_edges)
+    edge_verts = hxa_util.flatten_list(sorted_edges)
     print(f"Edge verts: {edge_verts}")
 
     # check for !=0 creases
@@ -389,7 +396,7 @@ def ExportPayload():
         meta_creases_verts = {
             "name_length":  0,
             "name":         "",
-            "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_INT64),
+            "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_INT64),
             "array_length": len(edge_verts),
             "data":         edge_verts
         }
@@ -398,7 +405,7 @@ def ExportPayload():
         meta_creases_values = {
             "name_length":  0,
             "name":         "",
-            "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_DOUBLE),
+            "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_DOUBLE),
             "array_length": len(sorted_creases),
             "data":         sorted_creases
         }
@@ -408,7 +415,7 @@ def ExportPayload():
         meta_creases_data = {
             "name_length":  len(meta_creases_data_name),
             "name":         meta_creases_data_name,
-            "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_META),
+            "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_META),
             "array_length": len(meta_creases_data_entries),
             "data":         meta_creases_data_entries
         }
@@ -423,10 +430,10 @@ def ExportPayload():
             import idprop
             if (type(customprop) == idprop.types.IDPropertyArray):
                 al    = len(customprop)
-                mtype = HXAPyTypeMeta(type(customprop[0]))
+                mtype = hxapy_type_meta(type(customprop[0]))
                 data  = list(customprop)
             else:
-                mtype = HXAPyTypeMeta(type(customprop))
+                mtype = hxapy_type_meta(type(customprop))
                 data  = customprop
                 if (mtype == hxa.HXA_MDT_TEXT):
                     al = len(data)
@@ -437,7 +444,7 @@ def ExportPayload():
             meta_cp = {
                 "name_length":  len(meta_cp_name),
                 "name":         meta_cp_name,
-                "type":         hxa.HXAMetaDataType(mtype),
+                "type":         hxa.hxa_meta_data_type(mtype),
                 "array_length": al,
                 "data":         data
             }
@@ -448,7 +455,7 @@ def ExportPayload():
         meta_customprops = {
             "name_length":  len(meta_customprops_name),
             "name":         meta_customprops_name,
-            "type":         hxa.HXAMetaDataType(hxa.HXA_MDT_META),
+            "type":         hxa.hxa_meta_data_type(hxa.HXA_MDT_META),
             "array_length": len(meta_customprops_data),
             "data":         meta_customprops_data
         }
@@ -459,7 +466,7 @@ def ExportPayload():
         "name_length": len(hxa.HXA_CONVENTION_HARD_BASE_VERTEX_LAYER_NAME),
         "name":        hxa.HXA_CONVENTION_HARD_BASE_VERTEX_LAYER_NAME,
         "components":  hxa.HXA_CONVENTION_HARD_BASE_VERTEX_LAYER_COMPONENTS,
-        "type":        hxa.HXADataType(hxa.HXA_LDT_FLOAT),
+        "type":        hxa.hxa_data_type(hxa.HXA_LDT_FLOAT),
         "data":        verts
     }
     vert_stack = {
@@ -471,7 +478,7 @@ def ExportPayload():
         "name_length": len(hxa.HXA_CONVENTION_HARD_BASE_CORNER_LAYER_NAME),
         "name":        hxa.HXA_CONVENTION_HARD_BASE_CORNER_LAYER_NAME,
         "components":  hxa.HXA_CONVENTION_HARD_BASE_CORNER_LAYER_COMPONENTS,
-        "type":        hxa.HXADataType(hxa.HXA_CONVENTION_HARD_BASE_CORNER_LAYER_TYPE),
+        "type":        hxa.hxa_data_type(hxa.HXA_CONVENTION_HARD_BASE_CORNER_LAYER_TYPE),
         "data":        references
     }
     corner_stack = {
@@ -499,7 +506,7 @@ def ExportPayload():
         'face_stack': face_stack
     }
     node = {
-        'type':            hxa.HXANodeType(hxa.HXA_NT_GEOMETRY),
+        'type':            hxa.hxa_node_type(hxa.HXA_NT_GEOMETRY),
         'meta_data_count': len(meta_data),
         'meta_data':       meta_data,
         'content':         content

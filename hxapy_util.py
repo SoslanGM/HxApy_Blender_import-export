@@ -2,11 +2,11 @@
 from datetime import datetime
 
 
-def TS():
+def timestamp():
     return datetime.now().strftime("%d%m%y-%H%M%S")
 
 
-def DS(start, end):
+def time_elapsed(start, end):
     delta = end - start
     s = delta.seconds
 
@@ -23,7 +23,7 @@ def DS(start, end):
         return f"Done in: {s}s"
 
 
-def FlattenList_1(_list):
+def flatten_list(_list):
     res = []
     for inner in _list:
         for el in inner:
@@ -31,7 +31,7 @@ def FlattenList_1(_list):
     return res
 
 
-def RestoreFaces(references):
+def restore_faces(references):
     faces = []
     tupl = []
     for r in references:
@@ -45,5 +45,5 @@ def RestoreFaces(references):
     return faces
 
 
-def BreakUp(data, length, step):
+def break_list_up(data, length, step):
     return [tuple(data[x:x+step]) for x in list(range(0, length, step))]

@@ -37,7 +37,7 @@ def u64(f):
     return su(_f, f)[0]
 
 
-def MetaValue(mtype, array_length, f):
+def meta_value(mtype, array_length, f):
     if (mtype == hxa.HXA_MDT_INT64):
         _f = "<"+"Q"*array_length
     elif (mtype == hxa.HXA_MDT_DOUBLE):
@@ -55,13 +55,12 @@ def MetaValue(mtype, array_length, f):
         return list(su(_f, f))
 
 
-def ReadMetas(f, silent=True):
+def read_metas(f, silent=True):
     name_length  = u8(f)
     name         = string(name_length, f)
     mtype        = u8(f)
     array_length = u32(f)
 
-    # CheckMtype()?
     if (mtype >= hxa.HXA_MDT_COUNT):
         print(f"HXA Error: File {f.name} has meta data of type {mtype}. There is only {hxa.HXA_MDT_COUNT} \
               types of meta data\n")
@@ -71,7 +70,7 @@ def ReadMetas(f, silent=True):
         print("Meta:")
         print(f" - name_length: {name_length}")
         print(f" - name: {name}")
-        print(f" - type: {hxa.HXAMetaDataType(mtype)}")
+        print(f" - type: {hxa.hxa_meta_data_type(mtype)}")
         print(f" - array_length: {array_length}")
 
     if ((array_length > 1) and not (mtype == hxa.HXA_MDT_TEXT)):
@@ -80,29 +79,29 @@ def ReadMetas(f, silent=True):
         data = None
 
     if (mtype < hxa.HXA_MDT_META):
-        data = MetaValue(mtype, array_length, f)
+        data = meta_value(mtype, array_length, f)
         if not silent:
             print(f" - Data: {data}")
     elif (mtype == hxa.HXA_MDT_META):
         if (array_length > 1):
             for j in range(array_length):
-                d = ReadMetas(f, silent)
+                d = read_metas(f, silent)
                 data.append(d)
         else:
-            d = ReadMetas(f, silent)
+            d = read_metas(f, silent)
             data = d
 
     meta_d = {
         "name_length":  name_length,
         "name":         name,
-        "type":         hxa.HXAMetaDataType(mtype),
+        "type":         hxa.hxa_meta_data_type(mtype),
         "array_length": array_length,
         "data":         data
     }
     return meta_d
 
 
-def DataValue(dtype, components, count, f):
+def data_value(dtype, components, count, f):
     if (dtype == hxa.HXA_LDT_UINT8):
         _f = "<"+"B"*components*count
     if (dtype == hxa.HXA_LDT_INT32):
@@ -118,7 +117,7 @@ def DataValue(dtype, components, count, f):
         return list(su(_f, f))
 
 
-def LayerDict(name_length, name, components, dtype, data):
+def layer_dict(name_length, name, components, dtype, data):
     d = {
         "name_length": name_length,
         "name":        name,
@@ -129,7 +128,7 @@ def LayerDict(name_length, name, components, dtype, data):
     return d
 
 
-def LayerStack(count, f, silent: bool = True):
+def layer_stack(count, f, silent: bool = True):
     layer_count = u32(f)
     if not silent:
         print(f" - stack layer count: {layer_count}")
@@ -147,25 +146,25 @@ def LayerStack(count, f, silent: bool = True):
             print(f"HXA Error: File {f.name} has a layer with type {dtype}. No such type is supported")
             exit()
 
-        data = DataValue(dtype, components, count, f)
+        data = data_value(dtype, components, count, f)
 
         if not silent:
             print(f"layer {i}:")
             print(f" - name_length: {name_length}")
             print(f" - name: {name}")
             print(f" - components: {components}")
-            print(f" - data_type: {hxa.HXADataType(dtype)}")
+            print(f" - data_type: {hxa.hxa_data_type(dtype)}")
             print(f" - data: {data}\n")
 
-        layer_dict = LayerDict(name_length, name, components, hxa.HXADataType(dtype), data)
+        layer_dictionary = layer_dict(name_length, name, components, hxa.hxa_data_type(dtype), data)
 
-        layers.append(layer_dict)
+        layers.append(layer_dictionary)
 
     layerstack_d['layers'] = layers
     return layerstack_d
 
 
-def HxaToDict(filename, silent=True):
+def hxa_to_dict(filename, silent=True):
     try:
         f = open(filename, "rb")
     except OSError:
@@ -198,22 +197,22 @@ def HxaToDict(filename, silent=True):
         meta_data = []
 
         if not silent:
-            print(f"Node type: {hxa.HXANodeType(node_type)}")
+            print(f"Node type: {hxa.hxa_node_type(node_type)}")
             print(f"Meta count: {meta_data_count}")
 
         for mc in range(meta_data_count):
-            meta = ReadMetas(f, False)
+            meta = read_metas(f, False)
             meta_data.append(meta)
 
         content = {}
         if (node_type == hxa.HXA_NT_GEOMETRY):
             vertex_count      = u32(f)
-            vertex_stack      = LayerStack(vertex_count, f, silent)
+            vertex_stack      = layer_stack(vertex_count, f, silent)
             edge_corner_count = u32(f)
-            corner_stack      = LayerStack(edge_corner_count, f, silent)
-            edge_stack        = LayerStack(edge_corner_count, f, silent)
+            corner_stack      = layer_stack(edge_corner_count, f, silent)
+            edge_stack        = layer_stack(edge_corner_count, f, silent)
             face_count        = u32(f)
-            face_stack        = LayerStack(face_count, f, silent)
+            face_stack        = layer_stack(face_count, f, silent)
 
             content['vertex_count']      = vertex_count
             content['vertex_stack']      = vertex_stack
@@ -227,7 +226,7 @@ def HxaToDict(filename, silent=True):
             print("! Not processing images yet\n")
 
         node_d = {
-            "type":            hxa.HXANodeType(node_type),
+            "type":            hxa.hxa_node_type(node_type),
             "meta_data_count": meta_data_count,
             "meta_data":       meta_data,
             "content":         content
@@ -257,7 +256,7 @@ def write_u32(f, v):
     f.write(struct.pack(_f, v))
 
 
-def Write_DataValue(f, dtype, data):
+def write_data_value(f, dtype, data):
     ld = len(data)
     if (dtype == hxa.HXA_LDT_UINT8):
         _f = "<"+"B"*ld
@@ -271,7 +270,7 @@ def Write_DataValue(f, dtype, data):
     f.write(struct.pack(_f, *data))
 
 
-def Write_MetaValue(f, mtype, array_length, data):
+def write_meta_value(f, mtype, array_length, data):
     if (mtype == hxa.HXA_MDT_INT64):
         _f = "<"+"Q"*array_length
     elif (mtype == hxa.HXA_MDT_DOUBLE):
@@ -291,8 +290,8 @@ def Write_MetaValue(f, mtype, array_length, data):
         f.write(struct.pack(_f, data))
 
 
-def WriteMetas(f, meta, silent=True):
-    mtype = hxa.HXAMetaDataTypeDict[meta['type']]
+def write_metas(f, meta, silent=True):
+    mtype = hxa.hxa_meta_data_type_dict[meta['type']]
 
     write_u8(f, meta['name_length'])
     write_s(f, meta['name_length'], meta['name'])
@@ -308,16 +307,16 @@ def WriteMetas(f, meta, silent=True):
 
     array_length = meta['array_length']
     if (mtype < hxa.HXA_MDT_META):
-        Write_MetaValue(f, mtype, array_length, meta['data'])
+        write_meta_value(f, mtype, array_length, meta['data'])
     elif (mtype == hxa.HXA_MDT_META):
         if (array_length > 1):
             for al in range(array_length):
-                WriteMetas(f, meta['data'][al], silent)
+                write_metas(f, meta['data'][al], silent)
         else:
-            WriteMetas(f, meta['data'], silent)
+            write_metas(f, meta['data'], silent)
 
 
-def Write_LayerStack(f, stack):
+def write_layerstack(f, stack):
     layer_count = stack['layer_count']
     write_u32(f, layer_count)
     for lc in range(layer_count):
@@ -325,19 +324,18 @@ def Write_LayerStack(f, stack):
         write_u8(f, layer['name_length'])
         write_s(f, layer['name_length'], layer['name'])
         write_u8(f, layer['components'])
-        dtype = hxa.HXADataTypeDict[layer['type']]
+        dtype = hxa.hxa_data_type_dict[layer['type']]
         write_u8(f, dtype)
-        Write_DataValue(f, dtype, layer['data'])
+        write_data_value(f, dtype, layer['data'])
 
 
-def DictToHxa(filename, hxa_dict, silent=True):
+def dict_to_hxa(filename, hxa_dict, silent=True):
     try:
         f = open(filename, "wb")
     except OSError:
         print(f"HXA Error: File {filename} could not be open for reading\n")
         exit()
 
-    # WriteHxaString(f)
     write_s(f, 4, "HxA"+'\x00')
 
     write_u8(f, hxa_dict['version'])
@@ -352,20 +350,20 @@ def DictToHxa(filename, hxa_dict, silent=True):
 
         print(f"{nc}, {node['type']}")
 
-        write_u8(f, hxa.HXANodeTypeDict[node['type']])
+        write_u8(f, hxa.hxa_node_type_dict[node['type']])
         write_u32(f, node['meta_data_count'])
 
         for mc in range(node['meta_data_count']):
             meta = node['meta_data'][mc]
-            WriteMetas(f, meta, silent)
+            write_metas(f, meta, silent)
 
         write_u32(f, node['content']['vertex_count'])
-        Write_LayerStack(f, node['content']['vertex_stack'])
+        write_layerstack(f, node['content']['vertex_stack'])
         write_u32(f, node['content']['edge_corner_count'])
-        Write_LayerStack(f, node['content']['corner_stack'])
-        Write_LayerStack(f, node['content']['edge_stack'])
+        write_layerstack(f, node['content']['corner_stack'])
+        write_layerstack(f, node['content']['edge_stack'])
         write_u32(f, node['content']['face_count'])
-        Write_LayerStack(f, node['content']['face_stack'])
+        write_layerstack(f, node['content']['face_stack'])
 
     f.close()
 

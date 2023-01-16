@@ -42,7 +42,7 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    
+
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 

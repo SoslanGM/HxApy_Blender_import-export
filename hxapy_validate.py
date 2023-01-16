@@ -5,7 +5,7 @@ from sys import argv
 
 
 def hxa_util_validate_meta(meta, node, count, silent=True):
-    meta_type = hxa.HXAMetaDataTypeDict[meta['type']]
+    meta_type = hxa.hxa_meta_data_type_dict[meta['type']]
     if (meta_type == hxa.HXA_MDT_NODE):
         for al in range(meta['array_length']):
             if (meta['data'][al] >= count):
@@ -24,7 +24,7 @@ def hxa_util_validate(hxa_file, silent=True):
         for mc in range(node['meta_data_count']):
             hxa_util_validate_meta(node['meta_data'][mc], mc, hxa_file['node_count'], silent)
 
-        node_type = hxa.HXANodeTypeDict[node['type']]
+        node_type = hxa.hxa_node_type_dict[node['type']]
         if (node_type == hxa.HXA_NT_GEOMETRY):
             if (node['content']['vertex_stack']['layer_count'] == 0):
                 if not silent:
@@ -38,10 +38,10 @@ def hxa_util_validate(hxa_file, silent=True):
                           {hxa.HXA_CONVENTION_HARD_BASE_VERTEX_LAYER_COMPONENTS}.\n")
                 return False
 
-            layer_type = hxa.HXADataTypeDict[node['content']['vertex_stack']['layers'][0]['type']]
+            layer_type = hxa.hxa_data_type_dict[node['content']['vertex_stack']['layers'][0]['type']]
             if ((layer_type != hxa.HXA_LDT_FLOAT) and (layer_type != hxa.HXA_LDT_DOUBLE)):
                 if not silent:
-                    print(f"HxA Verify Error: Node {nc} first vertex layer is {hxa.HXADataType(layer_type)}, \
+                    print(f"HxA Verify Error: Node {nc} first vertex layer is {hxa.hxa_data_type(layer_type)}, \
                           must be HXA_LDT_FLOAT or HXA_LDT_DOUBLE\n")
                 return False
 
@@ -60,10 +60,10 @@ def hxa_util_validate(hxa_file, silent=True):
                         print(f"HxA Verify Error: Node {nc} reference layer has {components} components. Must be 1.\n")
                     return False
 
-                layer_type = hxa.HXADataTypeDict[node['content']['corner_stack']['layers'][0]['type']]
+                layer_type = hxa.hxa_data_type_dict[node['content']['corner_stack']['layers'][0]['type']]
                 if (layer_type != hxa.HXA_LDT_INT32):
                     if not silent:
-                        print(f"HxA Verify Error: Node {nc} reference layer is of type {hxa.HXADataType(layer_type)} \
+                        print(f"HxA Verify Error: Node {nc} reference layer is of type {hxa.hxa_data_type(layer_type)} \
                               must be HXA_LDT_INT32\n")
                     return False
 
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     # for now, we have a single filename after the script:
     # - py hxapy_validate.py filename
     filename = argv[-1]
-    hxafile = hxa_rw.HxaToDict(filename)
+    hxafile = hxa_rw.hxa_to_dict(filename)
 
     valid = hxa_util_validate(hxafile)
     if not valid:
