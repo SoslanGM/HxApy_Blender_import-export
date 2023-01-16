@@ -1,19 +1,20 @@
 bl_info = {
-    "name":        "HxA asset format",
+    "name": "HxA asset format",
     "description": "Import-Export HxA",
-    "author":      "SoslanGM (Soslan Guchmazov)",
-    "version":     (0, 1),
-    "blender":     (3, 0, 0),
-    "location":    "File > Import-Export",
-    "warning":     "",
-    "doc_url":     "https://github.com/SoslanGM/HxApy_Blender_import-export",
+    "author": "SoslanGM (Soslan Guchmazov)",
+    "version": (0, 1),
+    "blender": (3, 0, 0),
+    "location": "File > Import-Export",
+    "warning": "",
+    "doc_url": "https://github.com/SoslanGM/HxApy_Blender_import-export",
     "tracker_url": "",
-    "support":     "TESTING",
-    "category":    "Import-Export",
+    "support": "TESTING",
+    "category": "Import-Export",
 }
 
 if "bpy" in locals():
     import importlib
+
     if "import_hxa_py" in locals():
         importlib.reload(import_hxa_py)
     if "export_hxa_py" in locals():

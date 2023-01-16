@@ -16,7 +16,7 @@ to_zip = [
     "hxapy_util.py",
     "hxapy_header.py",
     "hxapy_read_write.py",
-    "hxapy_validate.py"
+    "hxapy_validate.py",
 ]
 
 
@@ -43,7 +43,7 @@ def PackHxA():
 
 if __name__ == "__main__":
     filename = PackHxA()
-    if (os.path.exists(filename)):
+    if os.path.exists(filename):
         print(f"> Wrote {filename}")
         with ZipFile(filename, "r") as archive:
             archive.printdir()
