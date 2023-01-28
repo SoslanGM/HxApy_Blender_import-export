@@ -2,10 +2,17 @@ import bpy
 from bpy.props import StringProperty
 from bpy_extras.io_utils import ImportHelper
 
-
 from . import hxapy_read_write as hxa_rw
 from . import hxapy_util as hxa_util
 from . import hxapy_validate as hxa_valid
+
+# import hxapy_read_write as hxa_rw
+# import hxapy_util as hxa_util
+# import hxapy_validate as hxa_valid
+
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class ImportHXA(bpy.types.Operator, ImportHelper):
@@ -19,82 +26,142 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
     filter_glob: StringProperty(default="*.hxa", options={"HIDDEN"})
 
     def execute(self, context):
-        silent = True
-        hxa_dict = hxa_rw.convert_hxa_to_dict(self.properties.filepath, silent)
+        try:
+            f = open(self.filepath, "rb")
+        except OSError:
+            self.report(
+                {"ERROR"},
+                f"HXA Error: File {self.filepath} could not be open for reading\n",
+            )
+            log.info(f"HXA Error: File {self.filepath} could not be open for reading\n")
+            return {"CANCELLED"}
+
+        hxa_dict = hxa_rw.read_hxa(f)
+        f.close()
 
         if not hxa_valid.hxa_util_validate(hxa_dict):
             self.report({"ERROR"}, f"{self.filepath} couldn't pass validation")
+            log.info(f"{self.filepath} couldn't pass validation")
             return {"CANCELLED"}
 
         meta_data_count = hxa_dict["nodes"][0]["meta_data_count"]
-        if meta_data_count != 0:
+        if meta_data_count > 0:
             meta_data = hxa_dict["nodes"][0]["meta_data"]
 
-            # *** meta containers
-            for meta in meta_data:
-                if meta["name"] == "meta mesh data":
-                    meta_meshdata = meta
+            metas_present = {meta["name"]: meta for meta in meta_data}
+            meta_meshdata = metas_present["meta mesh data"]
 
-                if meta["name"] == "meta shapekeys":
-                    meta_shapekeys = meta
+            meta_shapekeys = (
+                metas_present["meta shapekeys"]
+                if "meta shapekeys" in metas_present.keys()
+                else None
+            )
 
-                if meta["name"] == "meta armature data":
-                    meta_armaturedata = meta
+            meta_armaturedata = (
+                metas_present["meta armature data"]
+                if "meta armature data" in metas_present.keys()
+                else None
+            )
 
-                # should I lump these two into another meta container?
-                if meta["name"] == "meta weight indexes":
-                    meta_weightindexes = meta
-                if meta["name"] == "meta vertex weights":
-                    meta_vertexweights = meta
+            meta_weightindexes = (
+                metas_present["meta weight indexes"]
+                if "meta weight indexes" in metas_present.keys()
+                else None
+            )
 
-                if meta["name"] == "meta custom properties":
-                    meta_customproperties = meta
+            meta_vertexweights = (
+                metas_present["meta vertex weights"]
+                if "meta vertex weights" in metas_present.keys()
+                else None
+            )
 
-                if meta["name"] == "meta creases":
-                    meta_creases = meta
+            meta_customproperties = (
+                metas_present["meta custom properties"]
+                if "meta custom properties" in metas_present.keys()
+                else None
+            )
+
+            meta_creases = (
+                metas_present["meta creases"]
+                if "meta creases" in metas_present.keys()
+                else None
+            )
 
             # ** mesh data
             meta_meshdata_entries = meta_meshdata["data"]
-            for meta in meta_meshdata_entries:
-                if meta["name"] == "meta objectname":
-                    meta_objectname = meta
+            metas_present = {meta["name"]: meta for meta in meta_meshdata_entries}
 
-                if meta["name"] == "meta meshname":
-                    meta_meshname = meta
+            meta_objectname = (
+                metas_present["meta objectname"]
+                if "meta objectname" in metas_present.keys()
+                else None
+            )
 
-                if meta["name"] == "meta location":
-                    meta_location = meta
+            meta_meshname = (
+                metas_present["meta meshname"]
+                if "meta meshname" in metas_present.keys()
+                else None
+            )
 
-                if meta["name"] == "meta scale":
-                    meta_scale = meta
+            meta_location = (
+                metas_present["meta location"]
+                if "meta location" in metas_present.keys()
+                else None
+            )
+
+            meta_scale = (
+                metas_present["meta scale"]
+                if "meta scale" in metas_present.keys()
+                else None
+            )
 
             # ** armature data
-            if "meta_armaturedata" in locals():
+            if meta_armaturedata:
                 meta_armaturedata_entries = meta_armaturedata["data"]
-                for meta in meta_armaturedata_entries:
-                    if meta["name"] == "meta armature location":
-                        meta_armature_location = meta
+                metas_present = {
+                    meta["name"]: meta for meta in meta_armaturedata_entries
+                }
 
-                    if meta["name"] == "meta armature scale":
-                        meta_armature_scale = meta
+                meta_armature_location = (
+                    metas_present["meta armature location"]
+                    if "meta armature location" in metas_present.keys()
+                    else None
+                )
 
-                    if meta["name"] == "meta bones heads":
-                        meta_bones_heads = meta
+                meta_armature_scale = (
+                    metas_present["meta armature scale"]
+                    if "meta armature scale" in metas_present.keys()
+                    else None
+                )
 
-                    if meta["name"] == "meta bones tails":
-                        meta_bones_tails = meta
+                meta_bones_heads = (
+                    metas_present["meta bones heads"]
+                    if "meta bones heads" in metas_present.keys()
+                    else None
+                )
 
-                    if meta["name"] == "meta bones names":
-                        meta_bones_names = meta
+                meta_bones_tails = (
+                    metas_present["meta bones tails"]
+                    if "meta bones tails" in metas_present.keys()
+                    else None
+                )
 
-                    if meta["name"] == "meta bones parents":
-                        meta_bones_parents = meta
+                meta_bones_names = (
+                    metas_present["meta bones names"]
+                    if "meta bones names" in metas_present.keys()
+                    else None
+                )
 
-        if not silent:
-            print(meta_objectname["data"])
-            print(meta_meshname["data"])
-            print(meta_location["data"])
-            print(meta_scale["data"])
+                meta_bones_parents = (
+                    metas_present["meta bones parents"]
+                    if "meta bones parents" in metas_present.keys()
+                    else None
+                )
+
+        log.debug(meta_objectname["data"])
+        log.debug(meta_meshname["data"])
+        log.debug(meta_location["data"])
+        log.debug(meta_scale["data"])
 
         vertex_count = hxa_dict["nodes"][0]["content"]["vertex_count"]
         vert_data = hxa_dict["nodes"][0]["content"]["vertex_stack"]["layers"][0]["data"]
@@ -103,9 +170,9 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
         # - Add edge verts to the mesh, then write creases to mesh after picking out the edges?
         verts = hxa_util.break_list_up(vert_data, vertex_count * 3, 3)
 
-        if "meta_creases" in locals():
+        if meta_creases:
             edge_data = meta_creases["data"][0]["data"]
-            arrlen = meta_creases["data"][0]["array_length"]
+            arrlen = len(meta_creases["data"][0]["data"])
             edges = hxa_util.break_list_up(edge_data, arrlen, 2)
             crease_values = meta_creases["data"][1]["data"]
 
@@ -138,27 +205,27 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
         # mesh_object = bpy.data.objects[meta_objectname['data']]
         mesh_object = bpy.context.object
 
-        if "meta_location" in locals():
+        if meta_location:
             x, y, z = meta_location["data"]
 
             mesh_object.location.x = x
             mesh_object.location.y = y
             mesh_object.location.z = z
 
-        if "meta_scale" in locals():
+        if meta_scale:
             x, y, z = meta_scale["data"]
 
             mesh_object.scale.x = x
             mesh_object.scale.y = y
             mesh_object.scale.z = z
 
-        if "meta_armature_location" in locals():
+        if meta_armature_location:
             armature_location = meta_armature_location["data"]
 
-        if "meta_armature_scale" in locals():
+        if meta_armature_scale:
             armature_scale = meta_armature_scale["data"]
 
-        if "meta_creases" in locals():
+        if meta_creases:
             mesh_edges = mesh_object.data.edges
             edge_verts = [list(e.vertices) for e in mesh_object.data.edges]
             for i in range(len(crease_values)):
@@ -166,7 +233,7 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
                 k = str(f"{e[0]} {e[1]}")
                 mesh_edges[i].crease = crease_dict[k]
 
-        if "meta_shapekeys" in locals():
+        if meta_shapekeys:
             shapekeys_data = meta_shapekeys["data"]
 
             for i in range(len(shapekeys_data)):
@@ -179,8 +246,8 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
                 for i in range(vertex_count):
                     shapekey.data[i].co = shapekeys_values[i]
 
-        if "meta_armaturedata" in locals():
-            bone_count = meta_bones_heads["array_length"] / 3
+        if meta_armaturedata:
+            bone_count = len(meta_bones_heads["data"]) / 3
             heads = hxa_util.break_list_up(
                 meta_bones_heads["data"], int(bone_count) * 3, 3
             )
@@ -190,13 +257,6 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
             )
             names = [x["data"] for x in meta_bones_names["data"]]
             parents = [x["data"] for x in meta_bones_parents["data"]]
-
-            for i in range(len(heads)):
-                print(f"{heads[i]} - {tails[i]}")
-            for n in names:
-                print(n)
-            for p in parents:
-                print(p)
 
             restore_armature(
                 armature_location, armature_scale, heads, tails, names, parents
@@ -215,7 +275,7 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
 
         # - does this exist without armatures? (does this need to get indented into the armature block :) )
         # *** Vertex weights
-        if ("meta_weightindexes" in locals()) & ("meta_vertexweights" in locals()):
+        if (meta_weightindexes != None) & (meta_vertexweights != None):
             vindex_list = meta_weightindexes["data"]
             vgroup_list = meta_vertexweights["data"]
 
@@ -231,7 +291,7 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
 
         # *** Custom properties
         # assumption: custom props are saved on the mesh object. It's fine, but something to think about.
-        if "meta_customproperties" in locals():
+        if meta_customproperties:
             customprop_entries = meta_customproperties["data"]
             for customprop in customprop_entries:
                 mesh_object[customprop["name"]] = customprop["data"]
