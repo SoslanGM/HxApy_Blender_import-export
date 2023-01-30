@@ -21,7 +21,6 @@ class HXANodeType(IntEnum):
     HXA_NT_META_ONLY = 0
     HXA_NT_GEOMETRY = 1
     HXA_NT_IMAGE = 2
-    HXA_NT_COUNT = 3
 
 
 class HXAImageType(IntEnum):
@@ -38,7 +37,6 @@ class HXAMetaDataType(IntEnum):
     HXA_MDT_TEXT = 3
     HXA_MDT_BINARY = 4
     HXA_MDT_META = 5
-    HXA_MDT_COUNT = 6
 
 
 class HXALayerDataType(IntEnum):
@@ -46,7 +44,6 @@ class HXALayerDataType(IntEnum):
     HXA_LDT_INT32 = 1
     HXA_LDT_FLOAT = 2
     HXA_LDT_DOUBLE = 3
-    HXA_LDT_COUNT = 4
 
 
 # - Hard conventions

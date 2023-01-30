@@ -1,14 +1,13 @@
 from zipfile import ZipFile
 import os
 from datetime import datetime
-import shutil
-import pathlib
 
 
 def TS():
     return datetime.now().strftime("%d-%m-%y_%H-%M-%S")
 
 
+# might want to switch to a glob at some point
 to_zip = [
     "io_scene_hxa\\__init__.py",
     "io_scene_hxa\\import_hxa_py.py",
@@ -23,20 +22,10 @@ to_zip = [
 def PackHxA():
     folder = "io_scene_hxa"
 
-    if not os.path.exists(folder):
-        os.mkdir(folder)
-
-    for tz in to_zip:
-        shutil.copy(tz, folder)
-
-    directory = pathlib.Path(folder)
-
     filename = f"HxA_py-{TS()}.zip"
     with ZipFile(filename, "w") as zf:
-        for filepath in directory.rglob("*"):
-            zf.write(filepath)
-
-    shutil.rmtree(folder)
+        for tz in to_zip:
+            zf.write(tz)
 
     return filename
 

@@ -7,11 +7,6 @@ from . import hxapy_util as hxa_util
 from . import hxapy_read_write as hxa_rw
 from . import hxapy_validate as hxa_valid
 
-# import hxapy_header as hxa
-# import hxapy_util as hxa_util
-# import hxapy_read_write as hxa_rw
-# import hxapy_validate as hxa_valid
-
 from bpy.props import StringProperty
 from bpy_extras.io_utils import ExportHelper
 

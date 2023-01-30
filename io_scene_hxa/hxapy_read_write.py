@@ -1,7 +1,5 @@
 from . import hxapy_header as hxa
 
-# import hxapy_header as hxa
-
 import logging
 
 log = logging.getLogger(__name__)
@@ -52,16 +50,6 @@ def read_meta(f):
     mtype = hxa.HXAMetaDataType(read_u8(f))
     length = read_u32(f)
 
-    if mtype >= hxa.HXAMetaDataType.HXA_MDT_COUNT:
-        log.debug(
-            f"HXA Error: File {f.name} has meta data of type {mtype}. There is only {hxa.HXAMetaDataType.HXA_MDT_COUNT} \
-              types of meta data\n"
-        )
-        raise RuntimeError(
-            f"HXA Error: File {f.name} has meta data of type {mtype}. There is only \
-                            {hxa.HXAMetaDataType.HXA_MDT_COUNT} types of meta data\n"
-        )
-
     if mtype == hxa.HXAMetaDataType.HXA_MDT_INT64:
         data = read_array1(f, "Q", length)
     elif mtype == hxa.HXAMetaDataType.HXA_MDT_DOUBLE:
@@ -96,13 +84,6 @@ def read_layer(f, count):
     layer["name"] = read_name(f)
     layer["components"] = read_u8(f)
     dtype = hxa.HXALayerDataType(read_u8(f))
-    if dtype > hxa.HXALayerDataType.HXA_LDT_COUNT:
-        log.debug(
-            f"HXA Error: File {f.name} has a layer with type {dtype}. No such type is supported"
-        )
-        raise RuntimeError(
-            f"HXA Error: File {f.name} has a layer with type {dtype}. No such type is supported"
-        )
     layer["type"] = dtype
 
     length = count * layer["components"]
@@ -135,10 +116,6 @@ def read_layerstack(f, count):
 def read_node(f):
     node = {}
     node_type = hxa.HXANodeType(read_u8(f))
-    if node_type >= hxa.HXANodeType.HXA_NT_COUNT:
-        log.debug(f"HXA Error: File {f.name} has a node of type {node_type}\n")
-        raise RuntimeError(f"HXA Error: File {f.name} has a node of type {node_type}\n")
-
     node["type"] = node_type
     node["meta_data_count"] = read_u32(f)
     node["meta_data"] = [read_meta(f) for i in range(node["meta_data_count"])]
