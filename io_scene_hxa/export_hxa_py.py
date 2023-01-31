@@ -129,23 +129,14 @@ def meta__armature_data(arm_ob, arm):
 
 def extract_weights(ob):
     vgroups = ob.vertex_groups
-    vcount = len(ob.data.vertices)
 
-    indexes_biglist = []
-    weights_biglist = []
-    for vgroup in vgroups:
-        indexes = []
-        weights = []
-        for i in range(vcount):
-            try:
-                weights.append(vgroup.weight(i))
-                indexes.append(i)
-            except Exception as e:
-                log.exception(f"Weights append exception: {e}", exc_info=1)
-                pass
-        indexes_biglist.append(indexes)
-        weights_biglist.append(weights)
-
+    indexes_biglist = [[] for _ in vgroups]
+    weights_biglist = [[] for _ in vgroups]
+    for vi, vert in enumerate(ob.data.vertices):
+        for g in vert.groups:
+            indexes_biglist[g.group].append(vi)
+            weights_biglist[g.group].append(g.weight)
+    
     return (indexes_biglist, weights_biglist)
 
 
