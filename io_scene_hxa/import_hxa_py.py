@@ -40,6 +40,22 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
             log.info(f"{self.filepath} couldn't pass validation")
             return {"CANCELLED"}
 
+        meta_shapekeys = None
+        meta_armaturedata = None
+        meta_weightindexes = None
+        meta_vertexweights = None
+        meta_customproperties = None
+        meta_creases = None
+        meta_objectname = None
+        meta_meshname = None
+        meta_location = None
+        meta_scale = None
+        meta_armature_location = None
+        meta_armature_scale = None
+        meta_bones_heads = None
+        meta_bones_tails = None
+        meta_bones_names = None
+        meta_bones_parents = None
         meta_data_count = hxa_dict["nodes"][0]["meta_data_count"]
         if meta_data_count > 0:
             meta_data = hxa_dict["nodes"][0]["meta_data"]
@@ -47,69 +63,39 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
             metas_present = {meta["name"]: meta for meta in meta_data}
             meta_meshdata = metas_present["meta mesh data"]
 
-            meta_shapekeys = (
-                metas_present["meta shapekeys"]
-                if "meta shapekeys" in metas_present.keys()
-                else None
-            )
+            if "meta shapekeys" in metas_present.keys():
+                meta_shapekeys = metas_present["meta shapekeys"]
 
-            meta_armaturedata = (
-                metas_present["meta armature data"]
-                if "meta armature data" in metas_present.keys()
-                else None
-            )
+            if "meta armature data" in metas_present.keys():
+                meta_armaturedata = metas_present["meta armature data"]
 
-            meta_weightindexes = (
-                metas_present["meta weight indexes"]
-                if "meta weight indexes" in metas_present.keys()
-                else None
-            )
+            if "meta weight indexes" in metas_present.keys():
+                meta_weightindexes = metas_present["meta weight indexes"]
 
-            meta_vertexweights = (
-                metas_present["meta vertex weights"]
-                if "meta vertex weights" in metas_present.keys()
-                else None
-            )
+            if "meta vertex weights" in metas_present.keys():
+                meta_vertexweights = metas_present["meta vertex weights"]
 
-            meta_customproperties = (
-                metas_present["meta custom properties"]
-                if "meta custom properties" in metas_present.keys()
-                else None
-            )
+            if "meta custom properties" in metas_present.keys():
+                meta_customproperties = metas_present["meta custom properties"]
 
-            meta_creases = (
-                metas_present["meta creases"]
-                if "meta creases" in metas_present.keys()
-                else None
-            )
+            if "meta creases" in metas_present.keys():
+                meta_creases = metas_present["meta creases"]
 
             # ** mesh data
             meta_meshdata_entries = meta_meshdata["data"]
             metas_present = {meta["name"]: meta for meta in meta_meshdata_entries}
 
-            meta_objectname = (
-                metas_present["meta objectname"]
-                if "meta objectname" in metas_present.keys()
-                else None
-            )
+            if "meta objectname" in metas_present.keys():
+                meta_objectname = metas_present["meta objectname"]
 
-            meta_meshname = (
-                metas_present["meta meshname"]
-                if "meta meshname" in metas_present.keys()
-                else None
-            )
+            if "meta meshname" in metas_present.keys():
+                meta_meshname = metas_present["meta meshname"]
 
-            meta_location = (
-                metas_present["meta location"]
-                if "meta location" in metas_present.keys()
-                else None
-            )
+            if "meta location" in metas_present.keys():
+                meta_location = metas_present["meta location"]
 
-            meta_scale = (
-                metas_present["meta scale"]
-                if "meta scale" in metas_present.keys()
-                else None
-            )
+            if "meta scale" in metas_present.keys():
+                meta_scale = metas_present["meta scale"]
 
             # ** armature data
             if meta_armaturedata:
@@ -118,41 +104,23 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
                     meta["name"]: meta for meta in meta_armaturedata_entries
                 }
 
-                meta_armature_location = (
-                    metas_present["meta armature location"]
-                    if "meta armature location" in metas_present.keys()
-                    else None
-                )
+                if "meta armature location" in metas_present.keys():
+                    meta_armature_location = metas_present["meta armature location"]
 
-                meta_armature_scale = (
-                    metas_present["meta armature scale"]
-                    if "meta armature scale" in metas_present.keys()
-                    else None
-                )
+                if "meta armature scale" in metas_present.keys():
+                    meta_armature_scale = metas_present["meta armature scale"]
 
-                meta_bones_heads = (
-                    metas_present["meta bones heads"]
-                    if "meta bones heads" in metas_present.keys()
-                    else None
-                )
+                if "meta bones heads" in metas_present.keys():
+                    meta_bones_heads = metas_present["meta bones heads"]
 
-                meta_bones_tails = (
-                    metas_present["meta bones tails"]
-                    if "meta bones tails" in metas_present.keys()
-                    else None
-                )
+                if "meta bones tails" in metas_present.keys():
+                    meta_bones_tails = metas_present["meta bones tails"]
 
-                meta_bones_names = (
-                    metas_present["meta bones names"]
-                    if "meta bones names" in metas_present.keys()
-                    else None
-                )
+                if "meta bones names" in metas_present.keys():
+                    meta_bones_names = metas_present["meta bones names"]
 
-                meta_bones_parents = (
-                    metas_present["meta bones parents"]
-                    if "meta bones parents" in metas_present.keys()
-                    else None
-                )
+                if "meta bones parents" in metas_present.keys():
+                    meta_bones_parents = metas_present["meta bones parents"]
 
         log.debug(meta_objectname["data"])
         log.debug(meta_meshname["data"])
