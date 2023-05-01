@@ -95,7 +95,7 @@ def read_layer(f, count):
     elif dtype == hxa.HXALayerDataType.HXA_LDT_FLOAT:
         data = read_array(f, "f", length)
     elif dtype == hxa.HXALayerDataType.HXA_LDT_DOUBLE:
-        data = read_array(f, "b", length)
+        data = read_array(f, "d", length)
 
     layer["data"] = data
     log_layer(layer)

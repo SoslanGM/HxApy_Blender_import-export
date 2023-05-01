@@ -87,15 +87,19 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
 
             if "meta objectname" in metas_present.keys():
                 meta_objectname = metas_present["meta objectname"]
+                log.debug(meta_objectname["data"])
 
             if "meta meshname" in metas_present.keys():
                 meta_meshname = metas_present["meta meshname"]
+                log.debug(meta_meshname["data"])
 
             if "meta location" in metas_present.keys():
                 meta_location = metas_present["meta location"]
+                log.debug(meta_location["data"])
 
             if "meta scale" in metas_present.keys():
                 meta_scale = metas_present["meta scale"]
+                log.debug(meta_scale["data"])
 
             # ** armature data
             if meta_armaturedata:
@@ -122,10 +126,6 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
                 if "meta bones parents" in metas_present.keys():
                     meta_bones_parents = metas_present["meta bones parents"]
 
-        log.debug(meta_objectname["data"])
-        log.debug(meta_meshname["data"])
-        log.debug(meta_location["data"])
-        log.debug(meta_scale["data"])
 
         vertex_count = hxa_dict["nodes"][0]["content"]["vertex_count"]
         vert_data = hxa_dict["nodes"][0]["content"]["vertex_stack"]["layers"][0]["data"]
@@ -146,27 +146,23 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
                 k = str(f"{e[0]} {e[1]}")
                 v = crease_values[i]
                 crease_dict[k] = v
-
         else:
             edges = []  # for now
 
         faces = hxa_util.restore_faces(ref_data)
 
-        me_name = (
-            meta_meshname["data"]
-            if "meta_meshname" in locals()
-            else "imported HxA mesh"
-        )
-        ob_name = (
-            meta_objectname["data"]
-            if "meta_objectname" in locals()
-            else "imported HxA object"
-        )
+        if meta_meshname:
+            me_name = meta_meshname["data"]
+        else:
+            me_name = "imported HxA mesh"
+        
+        if meta_objectname:
+            ob_name = meta_objectname["data"]
+        else:
+            ob_name = "imported HxA object"
 
         restore_mesh(verts, edges, faces, me_name, ob_name)
-        # - 1: apply scale and position post-load
-        # now, select mesh and apply
-        # mesh_object = bpy.data.objects[meta_objectname['data']]
+        
         mesh_object = bpy.context.object
 
         if meta_location:

@@ -381,8 +381,8 @@ def export_payload():
     }
     node = {
         "type": hxa.HXANodeType.HXA_NT_GEOMETRY,
-        "meta_data_count": len(meta_data),
-        "meta_data": meta_data,
+        "meta_data_count": 0,
+        "meta_data": [],
         "content": content,
     }
     hxa_dict["nodes"] = [node]
