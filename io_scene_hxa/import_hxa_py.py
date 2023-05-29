@@ -256,6 +256,9 @@ class ImportHXA(bpy.types.Operator, ImportHelper):
             for customprop in customprop_entries:
                 mesh_object[customprop["name"]] = customprop["data"]
 
+
+        bpy.ops.object.shade_flat()
+
         return {"FINISHED"}
 
 
