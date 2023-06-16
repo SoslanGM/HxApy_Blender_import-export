@@ -1,14 +1,17 @@
 import bpy
 import bmesh
 
+from bpy.props import StringProperty
+from bpy_extras.io_utils import (
+    ExportHelper,
+    # orientation_helper
+    axis_conversion
+)
 
 from . import hxapy_header as hxa
 from . import hxapy_util as hxa_util
 from . import hxapy_read_write as hxa_rw
 from . import hxapy_validate as hxa_valid
-
-from bpy.props import StringProperty
-from bpy_extras.io_utils import ExportHelper
 
 import logging
 
@@ -29,7 +32,9 @@ class ExportHXA(bpy.types.Operator, ExportHelper):
         if bpy.ops.object.mode_set.poll():
             bpy.ops.object.mode_set(mode="OBJECT")
 
-        hxa_dict = export_payload()
+        TransformToDX(context.object)
+
+        hxa_dict = export_payload(context)
         if not hxa_valid.hxa_util_validate(hxa_dict):
             log.info(f"{self.filepath} couldn't pass validation")
             self.report({"ERROR"}, f"{self.filepath} couldn't pass validation")
@@ -48,7 +53,88 @@ class ExportHXA(bpy.types.Operator, ExportHelper):
         hxa_rw.write_hxa(f, hxa_dict)
         f.close()
 
+        TransformFromDX(context.object)
+
         return {"FINISHED"}
+
+
+def GetToDXMatrix():
+    to_dx   = axis_conversion(to_forward='-Z', to_up='Y').to_4x4()
+    from_dx = to_dx.inverted()
+    return to_dx, from_dx
+
+
+def GetMeshAndArmature(ob):
+    ob_mesh = None
+    ob_arm = None
+
+    # a mesh might not have an armature parent in HxA context
+    if ob.type == 'MESH':
+        ob_mesh = ob
+        if (ob.parent != None) & ((ob.parent.type == 'ARMATURE') & (type(ob_mesh.parent.data) == bpy.types.Armature)):
+            ob_arm = ob.parent
+
+    # if there's an armature, there has to be a child mesh
+    if ob.type == 'ARMATURE':
+        ob_arm = ob
+        children = ob_arm.children 
+        for i in range(len(children)):
+            if children[i].type == 'MESH':
+                ob_mesh = children[i]
+                break
+    
+    return ob_mesh, ob_arm
+
+
+def TransformToDX(ob):
+    to_dx, from_dx = GetToDXMatrix()
+
+    ob_mesh = None
+    ob_arm  = None
+    ob_mesh, ob_arm = GetMeshAndArmature(ob)
+    
+    # if there's an armature, only armature. Otherwise just mesh.
+    if(ob_arm):
+        ob_arm.matrix_world  @= to_dx
+    else:
+        ob_mesh.matrix_world @= to_dx
+
+    if(ob_mesh):
+        ob_mesh.select_set(True)
+    if(ob_arm):
+        ob_arm.select_set(True)
+
+    bpy.ops.object.transform_apply()
+
+    if(ob_mesh):
+        ob_mesh.select_set(False)
+    if(ob_arm):
+        ob_arm.select_set(False)
+
+
+def TransformFromDX(ob):
+    to_dx, from_dx = GetToDXMatrix()
+
+    ob_mesh = None
+    ob_arm  = None
+    ob_mesh, ob_arm = GetMeshAndArmature(bpy.context.object)
+    
+    if(ob_arm):
+        ob_arm.matrix_world  @= from_dx
+    else:
+        ob_mesh.matrix_world @= from_dx
+        
+    if(ob_arm):
+        ob_arm.select_set(True)
+    if(ob_mesh):
+        ob_mesh.select_set(True)
+        
+    bpy.ops.object.transform_apply()
+    
+    if(ob_arm):
+        ob_arm.select_set(False)
+    if(ob_mesh):
+        ob_mesh.select_set(False)
 
 
 def hxa_meta(name, typ, data):
@@ -151,15 +237,22 @@ def hxapy_type_meta(typ):
 
 
 # def ExportPayload(context, filepath):
-def export_payload():
+def export_payload(context):
     """
     The overarching function to produce our dictionary representation of a HxA file,
     before we write it to disk.
     """
+    
+    # ob_mesh, ob_arm = GetMeshAndArmature(bpy.context.object)
+    ob_mesh, ob_arm = GetMeshAndArmature(context.object)
+    
     bm = bmesh.new()
-    ob_mesh = bpy.context.object
+    # - switch orientations to DX12
+    
+    # if there's no armature, we rotate the object.
     me = ob_mesh.data
     bm.from_mesh(me)
+
 
     vert_count = len(bm.verts)
     face_count = len(bm.faces)
@@ -230,16 +323,10 @@ def export_payload():
             )
         )
 
-    # ** Armature
-    if ob_mesh.parent:
-        if (ob_mesh.parent.type == "ARMATURE") & (
-            type(ob_mesh.parent.data) == bpy.types.Armature
-        ):
-            ob_arm = ob_mesh.parent
-            arm = ob_arm.data
-
-            meta_armaturedata = meta__armature_data(ob_arm, arm)
-            meta_data.append(meta_armaturedata)
+    if ob_arm:
+        arm = ob_arm.data
+        meta_armaturedata = meta__armature_data(ob_arm, arm)
+        meta_data.append(meta_armaturedata)
 
     # ** Vertex weights
     if len(meta_data) > 0:
@@ -386,4 +473,6 @@ def export_payload():
         "content": content,
     }
     hxa_dict["nodes"] = [node]
+
+        
     return hxa_dict

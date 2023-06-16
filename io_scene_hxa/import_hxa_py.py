@@ -1,6 +1,10 @@
 import bpy
+
 from bpy.props import StringProperty
-from bpy_extras.io_utils import ImportHelper
+from bpy_extras.io_utils import (
+    ImportHelper,
+    orientation_helper
+)
 
 from . import hxapy_read_write as hxa_rw
 from . import hxapy_util as hxa_util
