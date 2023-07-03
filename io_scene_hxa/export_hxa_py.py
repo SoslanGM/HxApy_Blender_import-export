@@ -71,8 +71,11 @@ def GetMeshAndArmature(ob):
     # a mesh might not have an armature parent in HxA context
     if ob.type == 'MESH':
         ob_mesh = ob
-        if (ob.parent != None) & ((ob.parent.type == 'ARMATURE') & (type(ob_mesh.parent.data) == bpy.types.Armature)):
-            ob_arm = ob.parent
+        if (ob.parent != None):
+            if ((ob.parent.type == 'ARMATURE') & (type(ob_mesh.parent.data) == bpy.types.Armature)):
+                ob_arm = ob.parent
+        else:
+            ob_arm = None
 
     # if there's an armature, there has to be a child mesh
     if ob.type == 'ARMATURE':
